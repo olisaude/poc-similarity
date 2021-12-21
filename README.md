@@ -492,3 +492,14 @@ Example:
   }
 ]
 ```
+###Conclusão
+
+Após usarmos uma lista de nome de diferentes formas para representar uma unica pessoa,
+concluimos que o algoritmo a ser utilizado sera o **tversky**
+
+###Referencias
+- https://github.com/vickumar1981/stringdistance
+- https://github.com/tdebatty/Java-string-similarity
+- https://link.springer.com/chapter/10.1007/978-3-030-50143-3_21
+- https://en.wikipedia.org/wiki/Amos_Tversky
+
