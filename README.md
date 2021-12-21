@@ -3,6 +3,9 @@
 ---
 POC contruida com intuito de encontrar o melhor algoritmo de similaridade ou distancia
 
+###
+https://holistico.retool.com/embedded/public/421d3eb8-fbd4-4c3a-888c-878de06027dd
+
 ##Start
 
 ---
