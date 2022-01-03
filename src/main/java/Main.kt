@@ -1,6 +1,8 @@
 import com.github.vickumar1981.stringdistance.util.StringDistance
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
+import reactor.core.publisher.Flux
+import reactor.core.publisher.toMono
 import java.time.LocalDate
 
 fun <A> Collection<A>.forEachParallel(f: suspend (A) -> Unit): Unit =
@@ -21,10 +23,10 @@ fun main() {
     val scoreList = mutableMapOf<Pessoa, Double>()
     var bigScore = 0.0
     var objectSelected: Pessoa? = null
-
+    val inputs = Flux.fromIterable(inputsObj.toList())
 
     val similarPair = findSimilarOne(
-        inputsObj,
+        inputs,
         inputName,
         inputMotherName,
         inputCpf,
@@ -33,12 +35,56 @@ fun main() {
         bigScore,
         objectSelected
     )
-    bigScore = similarPair.first
-    objectSelected = similarPair.second
 
-    println("o maior score é o = " +bigScore)
-    println("o objeto relaionado ao maior score é o = "+objectSelected)
+    println("o maior score é o = " + similarPair.first)
+    println("o objeto relaionado ao maior score é o = "+ similarPair.second)
+
+    // println("o maior score é o = " +bigScore)
+    // println("o objeto relaionado ao maior score é o = "+objectSelected)
 }
+
+private fun findSimilarOne(
+    inputs: Flux<Pair<QueryType, MutableList<Pessoa>>>,
+    inputName: String,
+    inputMotherName: String,
+    inputCpf: String,
+    inputBirthdate: LocalDate,
+    scoreList: MutableMap<Pessoa, Double>,
+    bigScore: Double,
+    objectSelected: Pessoa?
+): Pair<Double, Pessoa?>{
+    var bigScore1 = bigScore
+    var objectSelected1= objectSelected
+
+
+    inputs.map {
+        for(i in it.second){
+            val scoreName = StringDistance.tversky(inputName, i.name.uppercase())
+            val scoreMotherName = StringDistance.tversky(inputMotherName, i.motherName.uppercase())
+            val scoreCpf = 1.0.takeIf { i.cpf == inputCpf } ?: 0.0
+            val birthdate = 1.0.takeIf { i.birthdate == inputBirthdate } ?: 0.0
+            val totalScore = calculateScore(scoreName, scoreMotherName, scoreCpf, birthdate, it.first)
+            println("total score que veio do metodo = $totalScore")
+            scoreList[i] = totalScore
+            // if (totalScore > bigScore) {
+            //     bigScore1 = totalScore
+            //     objectSelected1 = i
+            // }
+        }
+    }
+
+
+    scoreList.forEach {
+        if (it.value > bigScore) {
+            bigScore1 = it.value
+            objectSelected1 = it.key
+        }
+    }
+
+    return Pair(bigScore1,objectSelected1)
+}
+
+
 
 private fun calculateScore(
     scoreName: Double,
@@ -58,42 +104,4 @@ private fun calculateScore(
         ((scoreName + scoreMotherName + scoreCpf + scoreBirthdate) * peso) / (4.0 * peso)
 
     return countScore.format(5)
-}
-
-private fun findSimilarOne(
-    inputsObj: MutableMap<QueryType, MutableList<Pessoa>>,
-    inputName: String,
-    inputMotherName: String,
-    inputCpf: String,
-    inputBirthdate: LocalDate,
-    scoreList: MutableMap<Pessoa, Double>,
-    bigScore: Double,
-    objectSelected: Pessoa?
-): Pair<Double, Pessoa?> {
-    var bigScore1 = bigScore
-    var objectSelected1 = objectSelected
-    inputsObj.forEach {
-
-        println("o que tem dentro do foreach = " + it.value)
-
-        for (i in it.value) {
-
-            println("value do for de baixo = " + i)
-            val scoreName = StringDistance.tversky(inputName, i.name.uppercase())
-            val scoreMotherName = StringDistance.tversky(inputMotherName, i.motherName.uppercase())
-            val scoreCpf = 1.0.takeIf { i.cpf == inputCpf } ?: 0.0
-            val birthdate = 1.0.takeIf { i.birthdate == inputBirthdate } ?: 0.0
-            val totalScore = calculateScore(scoreName, scoreMotherName, scoreCpf, birthdate, it.key)
-            println("total score que veio do metodo = $totalScore")
-            scoreList[i] = totalScore
-        }
-    }
-
-    scoreList.forEach {
-        if (it.value > bigScore1) {
-            bigScore1 = it.value
-            objectSelected1 = it.key
-        }
-    }
-    return Pair(bigScore1, objectSelected1)
 }
