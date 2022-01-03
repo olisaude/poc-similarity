@@ -5,7 +5,13 @@ data class Pessoa(
     val name: String,
     val motherName: String,
     val birthdate: LocalDate,
-    val cpf: String
+    val cpf: String,
+    val queryType: QueryType? = null
+)
+
+data class PessoaSelect(
+    val pessoa: Pessoa,
+    val score: Double
 )
 
 const val pesoName: Double = 1.0
