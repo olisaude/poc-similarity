@@ -2,6 +2,7 @@ import com.github.vickumar1981.stringdistance.util.StringDistance
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import reactor.core.publisher.Flux
+import java.time.LocalDate
 
 fun <A> Collection<A>.forEachParallel(f: suspend (A) -> Unit): Unit =
     runBlocking {
@@ -11,9 +12,6 @@ fun <A> Collection<A>.forEachParallel(f: suspend (A) -> Unit): Unit =
 fun Double.format(digits: Int): Double = "%.${digits}f".format(this).replace(",", ".").toDouble()
 
 fun main() {
-
-    val x = StringDistance.damerau("expected", "expected")
-
     val inputName = expectedObject.name
     val inputMotherName = expectedObject.motherName
     val inputCpf = expectedObject.cpf
@@ -22,15 +20,7 @@ fun main() {
     Flux.just(pessoaByCpf, pessoaByName, pessoaByMotherName, pessoaByBirthdate)
     .flatMapIterable { it }
     .map { ps ->
-        val scoreName = StringDistance.tversky(inputName, ps.name.uppercase())
-        val scoreMotherName = StringDistance.tversky(inputMotherName, ps.motherName.uppercase())
-        val scoreCpf = 1.0.takeIf { ps.cpf == inputCpf } ?: 0.0
-        val birthdate = 1.0.takeIf { ps.birthdate == inputBirthdate } ?: 0.0
-        val totalScore = calculateScore(scoreName, scoreMotherName, scoreCpf, birthdate, ps.queryType!!)
-        PessoaSelect(
-            ps,
-            totalScore
-        )
+        pessoaSelect(inputName, ps, inputMotherName, inputCpf, inputBirthdate)
     }
     .sort { o1, o2 ->
         o2.score.compareTo(o1.score)
@@ -38,6 +28,24 @@ fun main() {
     .subscribe {
         println(it)
     }
+}
+
+private fun pessoaSelect(
+    inputName: String,
+    ps: Pessoa,
+    inputMotherName: String,
+    inputCpf: String,
+    inputBirthdate: LocalDate
+): PessoaSelect {
+    val scoreName = StringDistance.tversky(inputName, ps.name.uppercase())
+    val scoreMotherName = StringDistance.tversky(inputMotherName, ps.motherName.uppercase())
+    val scoreCpf = 1.0.takeIf { ps.cpf == inputCpf } ?: 0.0
+    val birthdate = 1.0.takeIf { ps.birthdate == inputBirthdate } ?: 0.0
+    val totalScore = calculateScore(scoreName, scoreMotherName, scoreCpf, birthdate, ps.queryType!!)
+    return PessoaSelect(
+        ps,
+        totalScore
+    )
 }
 
 fun calculateScore(
